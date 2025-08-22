@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "921222378528",
+    "project_id": "creddy-9da4a",
+    "storage_bucket": "creddy-9da4a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:921222378528:android:c53d734122e2bebbf8f845",
+        "android_client_info": {
+          "package_name": "com.creddy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYkepOgNyadCh54vRcn_QRP5ylRposONM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

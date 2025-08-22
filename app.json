@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "cready",
+    "slug": "Creddy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "creddy",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.creddy.app",
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "@react-native-firebase/crashlytics"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "fonts": {
+      "DMSans-Regular": "./assets/fonts/DMSans-Regular.ttf",
+      "DMSans-Medium": "./assets/fonts/DMSans-Medium.ttf",
+      "DMSans-Bold": "./assets/fonts/DMSans-Bold.ttf",
+      "DMSans-SemiBold": "./assets/fonts/DMSans-SemiBold.ttf",
+      "DMSans-Light": "./assets/fonts/DMSans-Light.ttf",
+      "SpaceMono-Regular": "./assets/fonts/SpaceMono-Regular.ttf"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "83b72102-7870-4118-95ba-e60eeb9143df"
+      }
+    },
+    "owner": "kundan175"
+  }
+}
