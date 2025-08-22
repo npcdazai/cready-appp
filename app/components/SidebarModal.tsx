@@ -1,5 +1,7 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+// import { LinearGradient } from "expo-linear-gradient";
+// import { router } from "expo-router";
+import { useRouter } from "expo-router";
+
 import React from "react";
 import {
   Image,
@@ -13,6 +15,9 @@ import {
   View,
 } from "react-native";
 import { useFooter } from "../context/FooterContex"; // Keep original import path
+import { LinearGradient } from "expo-linear-gradient";
+
+const router = useRouter();
 
 interface SidebarModalProps {
   visible: boolean;
@@ -310,3 +315,5 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
+
+export default SidebarModal
