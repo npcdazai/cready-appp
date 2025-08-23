@@ -1,6 +1,8 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Image,
   Linking,
   Platform,
@@ -10,18 +12,33 @@ import {
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
+import { SafeAreaView } from "react-native-safe-area-context";
 import PullToRefreshWrapper from "../components/PullToRefreshWrapper";
 import SidebarModal from "../components/SidebarModal";
 import { API_CONFIG } from "../config/api";
 import { useLoanList } from "../context/LoanListContext";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Dashboard() {
   const { user } = useSelector((state: any) => state.auth);
-
   const { loanList, refreshLoanList } = useLoanList();
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState<{[key: string]: {width: number, height: number}}>({});
+
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -29,7 +46,17 @@ export default function Dashboard() {
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
       />
-      <View style={styles.header}>
+
+      {/* 🔹 Animated Header */}
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY }],
+          },
+        ]}
+      >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <TouchableOpacity
             style={styles.menuIcon}
@@ -42,141 +69,180 @@ export default function Dashboard() {
             <Text style={styles.welcomeText}>Get credit. Get going.</Text>
           </View>
         </View>
-      </View>
+      </Animated.View>
+
       <PullToRefreshWrapper
         onRefresh={refreshLoanList}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-
-        <View
-          style={{
-            backgroundColor: "rgba(234, 236, 240, 1)",
-            height: 1,
-            width: "100%",
-          }}
-        />
         <View style={{ backgroundColor: "white" }}>
-          {/* Status Card */}
-          {/* <View style={styles.statusCard}>
-            <Text style={styles.statusText}>Your information is pending</Text>
-            <TouchableOpacity style={styles.statusButton}>
-              <Text style={styles.statusButtonText}>Complete profile</Text>
-            </TouchableOpacity>
-          </View> */}
-
-          {/* Promo Banner */}
-
-          <View style={{ marginVertical: 10, marginHorizontal: 20 }}>
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: "700",
-                fontFamily: "DMSans-bold",
-                color: "black",
-              }}
-            >
-              Welcome{" "}
-              <Text style={{ color: "rgba(98, 50, 255, 1)" }}>
-                {user?.firstName}
-              </Text>
-              !
+          {/* 🔹 Welcome Animation */}
+          <Animated.Text
+            style={{
+              fontSize: 24,
+              fontWeight: "700",
+              fontFamily: "DMSans-bold",
+              color: "black",
+              marginVertical: 10,
+              marginHorizontal: 20,
+              opacity: fadeAnim,
+              transform: [{ translateY }],
+            }}
+          >
+            Welcome{" "}
+            <Text style={{ color: "rgba(98, 50, 255, 1)" }}>
+              {user?.firstName}
             </Text>
-          </View>
-          <View style={styles.promoBanner}>
+            !
+          </Animated.Text>
+
+          {/* 🔹 Promo Banner Animation */}
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ scale: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.9, 1],
+              }) }],
+              ...styles.promoBanner,
+            }}
+          >
             <Image
               source={require("../../assets/images/QuickPersonalLoan.png")}
               style={styles.bannerImage}
               resizeMode="cover"
             />
-          </View>
+          </Animated.View>
 
-          {/* Loan Offer Cards */}
+          {/* 🔹 Loan Offer Cards Animation */}
           <View style={styles.loanCardsRow}>
-            <TouchableOpacity
-              style={styles.loanCard}
-              onPress={() => router.push("/offers?type=offers")}
-            >
-              <Image
-                source={require("../../assets/images/InstantLoanOffers.png")}
-                style={{ height: 130, width: "100%", borderRadius: 10 }}
-                resizeMode="cover"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.loanCard}
-              onPress={() => router.push("/offers?type=loan")}
-            >
-              <Image
-                source={require("../../assets/images/Personalloan.png")}
-                style={{ height: 130, width: "100%", borderRadius: 10 }}
-                resizeMode="cover"
-              />
-            </TouchableOpacity>
+            {[ 
+              {
+                image: require("../../assets/images/InstantLoanOffers.png"),
+                path: "/offers?type=offers",
+              },
+              {
+                image: require("../../assets/images/Personalloan.png"),
+                path: "/offers?type=loan",
+              },
+            ].map((card, index) => {
+              const anim = useRef(new Animated.Value(0)).current;
+
+              useEffect(() => {
+                Animated.timing(anim, {
+                  toValue: 1,
+                  duration: 600,
+                  delay: 300 * index,
+                  easing: Easing.out(Easing.ease),
+                  useNativeDriver: true,
+                }).start();
+              }, []);
+
+              return (
+                <Animated.View
+                  key={index}
+                  style={{
+                    flex: 1,
+                    marginHorizontal: 4,
+                    opacity: anim,
+                    transform: [
+                      {
+                        translateY: anim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => router.push(card.path)}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={card.image}
+                      style={{ height: 130, width: "100%", borderRadius: 10 }}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
           </View>
 
-          {/* Offers Section */}
+          {/* 🔹 Offers Section */}
           <Text style={styles.offersTitle}>Best Offers for you</Text>
           <View style={{ paddingBottom: 50 }}>
-            {loanList.map((item: any) => {
+            {loanList.map((item: any, index: number) => {
+              const anim = useRef(new Animated.Value(0)).current;
+
+              useEffect(() => {
+                Animated.timing(anim, {
+                  toValue: 1,
+                  duration: 600,
+                  delay: 300 * index,
+                  easing: Easing.out(Easing.ease),
+                  useNativeDriver: true,
+                }).start();
+              }, []);
+
               let url =
                 API_CONFIG.BASE_URL + item?.image ||
                 API_CONFIG.BASE_URL + item?.partner?.logoUrl;
 
-              if (!imageDimensions[url]) {
-                Image.getSize(
-                  url,
-                  (width, height) => {
-                    setImageDimensions(prev => ({
-                      ...prev,
-                      [url]: { width, height }
-                    }));
-                  },
-                  (error) => {
-                    console.error("Failed to get image size:", error);
-                    setImageDimensions(prev => ({
-                      ...prev,
-                      [url]: { width: 100, height: 100 }
-                    }));
-                  }
-                );
-              }
-
-              const dimensions = imageDimensions[url] || { width: 100, height: 100 };
-              
               return (
-                <View key={item.id || Math.random()} style={styles.offerCard}>
-                  <View style={styles.offerHeader}>
-                    <Image
-                      source={{
-                        uri: url,
+                <Animated.View
+                  key={item.id || index}
+                  style={{
+                    opacity: anim,
+                    transform: [
+                      {
+                        translateY: anim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <View style={styles.offerCard}>
+                    <View style={styles.offerHeader}>
+                      <Image
+                        source={{ uri: url }}
+                        style={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: 5,
+                        }}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Text style={styles.offerAmount}>{item.price}</Text>
+                    <Text style={styles.offerDetails}>{item?.description}</Text>
+                    <View style={styles.offerActions}>
+                      {JSON.parse(item.tags).map((tag: any, idx: any) => (
+                        <View key={idx} style={styles.quickApprovalBtn}>
+                          <Text style={styles.quickApprovalText}>{tag}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* 🔹 Button Press Animation */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        const url =
+                          Platform.OS === "ios"
+                            ? item?.appstore || item?.utm
+                            : item?.playstore || item?.utm;
+                        Linking.openURL(url);
                       }}
-                      style={{ width: dimensions.width, height: dimensions.height, borderRadius: 5 }}
-                      resizeMode="contain"
-                    />
+                      activeOpacity={0.7}
+                      style={styles.applyNowBtn}
+                    >
+                      <Text style={styles.applyNowText}>Apply Now</Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.offerAmount}>{item.price}</Text>
-                  <Text style={styles.offerDetails}>{item?.description}</Text>
-                  <View style={styles.offerActions}>
-                    {JSON.parse(item.tags).map((tag: any, index: any) => (
-                      <View key={index} style={styles.quickApprovalBtn}>
-                        <Text style={styles.quickApprovalText}>{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => {
-                      const url =
-                        Platform.OS === "ios"
-                          ? item?.appstore || item?.utm
-                          : item?.playstore || item?.utm;
-                      Linking.openURL(url);
-                    }}
-                    style={styles.applyNowBtn}
-                  >
-                    <Text style={styles.applyNowText}>Apply Now</Text>
-                  </TouchableOpacity>
-                </View>
+                </Animated.View>
               );
             })}
           </View>
