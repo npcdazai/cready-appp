@@ -2,8 +2,9 @@
 // import { router } from "expo-router";
 import { useRouter } from "expo-router";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
+  Animated,
   Image,
   Linking,
   Modal,
@@ -129,6 +130,40 @@ const getSocialIcon = (platform: string): React.ReactElement | null => {
 
 const SidebarModal: React.FC<SidebarModalProps> = ({ visible, onClose }) => {
   const { footerData, loading } = useFooter();
+  const slideAnim = useRef(new Animated.Value(-335)).current; // Start position (off-screen left)
+  const opacityAnim = useRef(new Animated.Value(0)).current; // Overlay opacity
+
+  useEffect(() => {
+    if (visible) {
+      // Slide in animation
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0, // Final position (on-screen)
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Slide out animation
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -335, // Back to off-screen position
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, slideAnim, opacityAnim]);
 
   const handleSocialLinkPress = async (url: string) => {
     try {
@@ -142,88 +177,137 @@ const SidebarModal: React.FC<SidebarModalProps> = ({ visible, onClose }) => {
   };
 
   const handleMenuItemPress = async (item: MenuItem) => {
-    onClose();
-    if (item.onPress) {
-      await item.onPress();
-    }
+    // First trigger the slide out animation
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: -335,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // After animation completes, close modal and execute action
+      onClose();
+      if (item.onPress) {
+        item.onPress();
+      }
+    });
+  };
+
+  const handleOverlayPress = () => {
+    // Trigger slide out animation before closing
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: -335,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
   };
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="none" // We'll handle animation manually
       transparent
-      onRequestClose={onClose}
+      onRequestClose={handleOverlayPress}
       statusBarTranslucent={true}
     >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onClose}
+      <Animated.View 
+        style={[
+          styles.overlay,
+          { opacity: opacityAnim }
+        ]}
       >
         <TouchableOpacity
-          style={styles.sidebarContainer}
+          style={styles.overlayTouchable}
           activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
+          onPress={handleOverlayPress}
+        />
+        
+        <Animated.View
+          style={[
+            styles.sidebarContainer,
+            {
+              transform: [{ translateX: slideAnim }]
+            }
+          ]}
         >
-          <LinearGradient
-            colors={[
-              "rgba(98, 50, 255, 0.2)",
-              "rgba(255, 255, 255, 1)",
-              "rgba(255, 255, 255, 1)",
-            ]}
-            start={{ x: 0.4, y: 1 }}
-            end={{ x: 0.5, y: 0.2 }}
-            style={styles.sidebar}
+          <TouchableOpacity
+            style={styles.sidebarTouchable}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
           >
-            <View style={styles.logoContainer}>
-              <Image 
-                source={require("../../assets/images/drawerlogo.png")} 
-                style={styles.logo}
-              />
-            </View>
-            
-            <View style={styles.menuList}>
-              {menuItems.map((item: MenuItem, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.menuItem}
-                  onPress={() => handleMenuItemPress(item)}
-                >
-                  <View style={styles.menuIcon}>
-                    {item.Image}
-                  </View>
-                  <Text style={styles.menuLabel}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            
-            <View style={styles.socialSection}>
-              <Text style={styles.appVersion}>App version 1.0.1</Text>
-              <View style={styles.separator} />
+            <LinearGradient
+              colors={[
+                "rgba(98, 50, 255, 0.2)",
+                "rgba(255, 255, 255, 1)",
+                "rgba(255, 255, 255, 1)",
+              ]}
+              start={{ x: 0.4, y: 1 }}
+              end={{ x: 0.5, y: 0.2 }}
+              style={styles.sidebar}
+            >
+              <View style={styles.logoContainer}>
+                <Image 
+                  source={require("../../assets/images/drawerlogo.png")} 
+                  style={styles.logo}
+                />
+              </View>
               
-              {!loading && footerData?.socialLinks && footerData.socialLinks.length > 0 && (
-                <View style={styles.socialIconsRow}>
-                  {footerData.socialLinks.map((socialLink: any, index: number) => {
-                    const icon = getSocialIcon(socialLink.platform);
-                    if (!icon) return null;
-                    
-                    return (
-                      <TouchableOpacity 
-                        key={socialLink._id || index}
-                        style={styles.socialIconCircle}
-                        onPress={() => handleSocialLinkPress(socialLink.url)}
-                      >
-                        {icon}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </TouchableOpacity>
+              <View style={styles.menuList}>
+                {menuItems.map((item: MenuItem, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.menuItem}
+                    onPress={() => handleMenuItemPress(item)}
+                  >
+                    <View style={styles.menuIcon}>
+                      {item.Image}
+                    </View>
+                    <Text style={styles.menuLabel}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              <View style={styles.socialSection}>
+                <Text style={styles.appVersion}>App version 1.0.1</Text>
+                <View style={styles.separator} />
+                
+                {!loading && footerData?.socialLinks && footerData.socialLinks.length > 0 && (
+                  <View style={styles.socialIconsRow}>
+                    {footerData.socialLinks.map((socialLink: any, index: number) => {
+                      const icon = getSocialIcon(socialLink.platform);
+                      if (!icon) return null;
+                      
+                      return (
+                        <TouchableOpacity 
+                          key={socialLink._id || index}
+                          style={styles.socialIconCircle}
+                          onPress={() => handleSocialLinkPress(socialLink.url)}
+                        >
+                          {icon}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -234,8 +318,19 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.3)",
     flexDirection: "row",
   },
+  overlayTouchable: {
+    flex: 1,
+  },
   sidebarContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 335,
     backgroundColor: "white",
+  },
+  sidebarTouchable: {
+    flex: 1,
   },
   sidebar: {
     width: 335,
@@ -306,7 +401,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.3)",
-    justifyContent: "center",
+    justifyContent: "center", 
     alignItems: "center",
   },
   socialIcon: {
@@ -316,4 +411,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SidebarModal
+export default SidebarModal;
