@@ -165,14 +165,103 @@ const SidebarModal: React.FC<SidebarModalProps> = ({ visible, onClose }) => {
     }
   }, [visible, slideAnim, opacityAnim]);
 
-  const handleSocialLinkPress = async (url: string) => {
+  const getDeepLinkUrl = (platform: string, webUrl: string): { appUrl: string; webUrl: string } => {
+    const platformLower = platform.toLowerCase();
+    
+    // Extract username/handle from web URL
+    const extractHandle = (url: string, pattern: RegExp) => {
+      const match = url.match(pattern);
+      return match ? match[1] : null;
+    };
+
+    switch (platformLower) {
+      case 'instagram': {
+        const handle = extractHandle(webUrl, /instagram\.com\/([^\/\?]+)/);
+        return {
+          appUrl: handle ? `instagram://user?username=${handle}` : 'instagram://app',
+          webUrl
+        };
+      }
+      case 'facebook': {
+        const handle = extractHandle(webUrl, /facebook\.com\/([^\/\?]+)/);
+        return {
+          appUrl: handle ? `fb://profile/${handle}` : 'fb://app',
+          webUrl
+        };
+      }
+      case 'x':
+      case 'twitter': {
+        const handle = extractHandle(webUrl, /(?:twitter\.com|x\.com)\/([^\/\?]+)/);
+        return {
+          appUrl: handle ? `twitter://user?screen_name=${handle}` : 'twitter://app',
+          webUrl
+        };
+      }
+      case 'youtube': {
+        const channelMatch = webUrl.match(/youtube\.com\/(?:channel|c|user)\/([^\/\?]+)/);
+        if (channelMatch) {
+          return {
+            appUrl: `youtube://channel/${channelMatch[1]}`,
+            webUrl
+          };
+        }
+        return {
+          appUrl: 'youtube://app',
+          webUrl
+        };
+      }
+      case 'linkedin': {
+        const handle = extractHandle(webUrl, /linkedin\.com\/(?:in|company)\/([^\/\?]+)/);
+        return {
+          appUrl: handle ? `linkedin://profile/${handle}` : 'linkedin://app',
+          webUrl
+        };
+      }
+      case 'whatsapp': {
+        // Check if it's a phone number or general WhatsApp link
+        const phoneMatch = webUrl.match(/wa\.me\/(\d+)/);
+        if (phoneMatch) {
+          return {
+            appUrl: `whatsapp://send?phone=${phoneMatch[1]}`,
+            webUrl
+          };
+        }
+        return {
+          appUrl: 'whatsapp://app',
+          webUrl
+        };
+      }
+      default:
+        return { appUrl: '', webUrl };
+    }
+  };
+
+  const handleSocialLinkPress = async (platform: string, url: string) => {
     try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
+      const { appUrl, webUrl } = getDeepLinkUrl(platform, url);
+      
+      // First, try to open the native app
+      if (appUrl) {
+        const canOpenApp = await Linking.canOpenURL(appUrl);
+        if (canOpenApp) {
+          await Linking.openURL(appUrl);
+          return;
+        }
+      }
+      
+      // Fallback to web browser
+      const canOpenWeb = await Linking.canOpenURL(webUrl);
+      if (canOpenWeb) {
+        await Linking.openURL(webUrl);
       }
     } catch (error) {
       console.error('Error opening social link:', error);
+      // Final fallback: try to open web URL
+      try {
+        await Linking.openURL(url);
+      } catch (fallbackError) {
+        console.error('Fallback error:', fallbackError);
+      }
     }
   };
 
@@ -295,7 +384,7 @@ const SidebarModal: React.FC<SidebarModalProps> = ({ visible, onClose }) => {
                         <TouchableOpacity 
                           key={socialLink._id || index}
                           style={styles.socialIconCircle}
-                          onPress={() => handleSocialLinkPress(socialLink.url)}
+                          onPress={() => handleSocialLinkPress(socialLink.platform, socialLink.url)}
                         >
                           {icon}
                         </TouchableOpacity>
