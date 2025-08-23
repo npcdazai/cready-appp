@@ -1,10 +1,8 @@
-// import { LinearGradient } from "expo-linear-gradient";
-// import { router } from "expo-router";
 import { useRouter } from "expo-router";
-
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
+  Easing,
   Image,
   Linking,
   Modal,
@@ -15,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useFooter } from "../context/FooterContex"; // Keep original import path
+import { useFooter } from "../context/FooterContex";
 import { LinearGradient } from "expo-linear-gradient";
 
 const router = useRouter();
@@ -43,9 +41,7 @@ const menuItems: MenuItem[] = [
     onPress: () => router.push("/faq"),
   },
   {
-    Image: (
-      <Image source={require("../../assets/images/LendingPartners.png")} />
-    ),
+    Image: <Image source={require("../../assets/images/LendingPartners.png")} />,
     label: "Lending Partners",
     onPress: () => router.push("/lending-partners"),
   },
@@ -62,7 +58,7 @@ const menuItems: MenuItem[] = [
               : "https://play.google.com/store/apps/details?id=com.creedy.app",
         });
       } catch (error) {
-        console.error('Error sharing:', error);
+        console.error("Error sharing:", error);
       }
     },
   },
@@ -71,30 +67,27 @@ const menuItems: MenuItem[] = [
     label: "Rate us",
     onPress: async () => {
       try {
-        const url = Platform.OS === "ios"
-          ? "https://apps.apple.com/us/app/creedy-cash-loan/id6744444444"
-          : "https://play.google.com/store/apps/details?id=com.creedy.app";
-        
+        const url =
+          Platform.OS === "ios"
+            ? "https://apps.apple.com/us/app/creedy-cash-loan/id6744444444"
+            : "https://play.google.com/store/apps/details?id=com.creedy.app";
+
         const canOpen = await Linking.canOpenURL(url);
         if (canOpen) {
           await Linking.openURL(url);
         }
       } catch (error) {
-        console.error('Error opening store link:', error);
+        console.error("Error opening store link:", error);
       }
     },
   },
   {
-    Image: (
-      <Image source={require("../../assets/images/PrivacypolicyIcon.png")} />
-    ),
+    Image: <Image source={require("../../assets/images/PrivacypolicyIcon.png")} />,
     label: "Privacy policy",
     onPress: () => router.push("/privacypolicy"),
   },
   {
-    Image: (
-      <Image source={require("../../assets/images/PrivacypolicyIcon.png")} />
-    ),
+    Image: <Image source={require("../../assets/images/PrivacypolicyIcon.png")} />,
     label: "Terms & Conditions",
     onPress: () => router.push("/termsconditions"),
   },
@@ -105,23 +98,21 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-// Social platform to icon mapping
+// Map social platform → icon
 const getSocialIcon = (platform: string): React.ReactElement | null => {
-  const platformLower = platform.toLowerCase();
-  
-  switch (platformLower) {
-    case 'facebook':
+  switch (platform.toLowerCase()) {
+    case "facebook":
       return <Image source={require("../../assets/images/fbIcon.png")} style={styles.socialIcon} />;
-    case 'x':
-    case 'twitter':
+    case "x":
+    case "twitter":
       return <Image source={require("../../assets/images/xIcon.png")} style={styles.socialIcon} />;
-    case 'instagram':
+    case "instagram":
       return <Image source={require("../../assets/images/insta.png")} style={styles.socialIcon} />;
-    case 'youtube':
+    case "youtube":
       return <Image source={require("../../assets/images/ytIcon.png")} style={styles.socialIcon} />;
-    case 'linkedin':
+    case "linkedin":
       return <Image source={require("../../assets/images/linkdeenIcon.png")} style={styles.socialIcon} />;
-    case 'whatsapp':
+    case "whatsapp":
       return <Image source={require("../../assets/images/whatsapp.png")} style={styles.socialIcon} />;
     default:
       return null;
@@ -130,271 +121,142 @@ const getSocialIcon = (platform: string): React.ReactElement | null => {
 
 const SidebarModal: React.FC<SidebarModalProps> = ({ visible, onClose }) => {
   const { footerData, loading } = useFooter();
-  const slideAnim = useRef(new Animated.Value(-335)).current; // Start position (off-screen left)
-  const opacityAnim = useRef(new Animated.Value(0)).current; // Overlay opacity
+  const slideAnim = useRef(new Animated.Value(-335)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  // Menu animations
+  const itemAnimations = useRef(menuItems.map(() => new Animated.Value(0))).current;
+
+  // Social icon scale animation (single effect for all icons)
+  const socialScaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     if (visible) {
-      // Slide in animation
       Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0, // Final position (on-screen)
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
       ]).start();
+
+      // stagger menu items
+      Animated.stagger(
+        80,
+        itemAnimations.map(anim =>
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 350,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          })
+        )
+      ).start();
+
+      // animate social icons
+      Animated.spring(socialScaleAnim, {
+        toValue: 1,
+        friction: 6,
+        useNativeDriver: true,
+      }).start();
     } else {
-      // Slide out animation
       Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: -335, // Back to off-screen position
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }),
+        Animated.timing(slideAnim, { toValue: -335, duration: 250, useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
       ]).start();
+
+      itemAnimations.forEach(anim => anim.setValue(0));
+      socialScaleAnim.setValue(0.8);
     }
-  }, [visible, slideAnim, opacityAnim]);
+  }, [visible]);
 
-  const getDeepLinkUrl = (platform: string, webUrl: string): { appUrl: string; webUrl: string } => {
-    const platformLower = platform.toLowerCase();
-    
-    // Extract username/handle from web URL
-    const extractHandle = (url: string, pattern: RegExp) => {
-      const match = url.match(pattern);
-      return match ? match[1] : null;
-    };
-
-    switch (platformLower) {
-      case 'instagram': {
-        const handle = extractHandle(webUrl, /instagram\.com\/([^\/\?]+)/);
-        return {
-          appUrl: handle ? `instagram://user?username=${handle}` : 'instagram://app',
-          webUrl
-        };
-      }
-      case 'facebook': {
-        const handle = extractHandle(webUrl, /facebook\.com\/([^\/\?]+)/);
-        return {
-          appUrl: handle ? `fb://profile/${handle}` : 'fb://app',
-          webUrl
-        };
-      }
-      case 'x':
-      case 'twitter': {
-        const handle = extractHandle(webUrl, /(?:twitter\.com|x\.com)\/([^\/\?]+)/);
-        return {
-          appUrl: handle ? `twitter://user?screen_name=${handle}` : 'twitter://app',
-          webUrl
-        };
-      }
-      case 'youtube': {
-        const channelMatch = webUrl.match(/youtube\.com\/(?:channel|c|user)\/([^\/\?]+)/);
-        if (channelMatch) {
-          return {
-            appUrl: `youtube://channel/${channelMatch[1]}`,
-            webUrl
-          };
-        }
-        return {
-          appUrl: 'youtube://app',
-          webUrl
-        };
-      }
-      case 'linkedin': {
-        const handle = extractHandle(webUrl, /linkedin\.com\/(?:in|company)\/([^\/\?]+)/);
-        return {
-          appUrl: handle ? `linkedin://profile/${handle}` : 'linkedin://app',
-          webUrl
-        };
-      }
-      case 'whatsapp': {
-        // Check if it's a phone number or general WhatsApp link
-        const phoneMatch = webUrl.match(/wa\.me\/(\d+)/);
-        if (phoneMatch) {
-          return {
-            appUrl: `whatsapp://send?phone=${phoneMatch[1]}`,
-            webUrl
-          };
-        }
-        return {
-          appUrl: 'whatsapp://app',
-          webUrl
-        };
-      }
-      default:
-        return { appUrl: '', webUrl };
-    }
-  };
-
-  const handleSocialLinkPress = async (platform: string, url: string) => {
-    try {
-      const { appUrl, webUrl } = getDeepLinkUrl(platform, url);
-      
-      // First, try to open the native app
-      if (appUrl) {
-        const canOpenApp = await Linking.canOpenURL(appUrl);
-        if (canOpenApp) {
-          await Linking.openURL(appUrl);
-          return;
-        }
-      }
-      
-      // Fallback to web browser
-      const canOpenWeb = await Linking.canOpenURL(webUrl);
-      if (canOpenWeb) {
-        await Linking.openURL(webUrl);
-      }
-    } catch (error) {
-      console.error('Error opening social link:', error);
-      // Final fallback: try to open web URL
-      try {
-        await Linking.openURL(url);
-      } catch (fallbackError) {
-        console.error('Fallback error:', fallbackError);
-      }
-    }
-  };
-
-  const handleMenuItemPress = async (item: MenuItem) => {
-    // First trigger the slide out animation
+  const handleMenuItemPress = (item: MenuItem) => {
     Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: -335,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
+      Animated.timing(slideAnim, { toValue: -335, duration: 250, useNativeDriver: true }),
+      Animated.timing(opacityAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
     ]).start(() => {
-      // After animation completes, close modal and execute action
       onClose();
-      if (item.onPress) {
-        item.onPress();
-      }
+      item.onPress();
     });
   };
 
   const handleOverlayPress = () => {
-    // Trigger slide out animation before closing
     Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: -335,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onClose();
-    });
+      Animated.timing(slideAnim, { toValue: -335, duration: 250, useNativeDriver: true }),
+      Animated.timing(opacityAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start(() => onClose());
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="none" // We'll handle animation manually
-      transparent
-      onRequestClose={handleOverlayPress}
-      statusBarTranslucent={true}
-    >
-      <Animated.View 
-        style={[
-          styles.overlay,
-          { opacity: opacityAnim }
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.overlayTouchable}
-          activeOpacity={1}
-          onPress={handleOverlayPress}
-        />
-        
-        <Animated.View
-          style={[
-            styles.sidebarContainer,
-            {
-              transform: [{ translateX: slideAnim }]
-            }
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.sidebarTouchable}
-            activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleOverlayPress}>
+      <Animated.View style={[styles.overlay, { opacity: opacityAnim }]}>
+        <TouchableOpacity style={styles.overlayTouchable} activeOpacity={1} onPress={handleOverlayPress} />
+        <Animated.View style={[styles.sidebarContainer, { transform: [{ translateX: slideAnim }] }]}>
+          <LinearGradient
+            colors={["rgba(98, 50, 255, 0.2)", "rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 1)"]}
+            start={{ x: 0.4, y: 1 }}
+            end={{ x: 0.5, y: 0.2 }}
+            style={styles.sidebar}
           >
-            <LinearGradient
-              colors={[
-                "rgba(98, 50, 255, 0.2)",
-                "rgba(255, 255, 255, 1)",
-                "rgba(255, 255, 255, 1)",
-              ]}
-              start={{ x: 0.4, y: 1 }}
-              end={{ x: 0.5, y: 0.2 }}
-              style={styles.sidebar}
-            >
-              <View style={styles.logoContainer}>
-                <Image 
-                  source={require("../../assets/images/drawerlogo.png")} 
-                  style={styles.logo}
-                />
-              </View>
-              
-              <View style={styles.menuList}>
-                {menuItems.map((item: MenuItem, idx) => (
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image source={require("../../assets/images/drawerlogo.png")} style={styles.logo} />
+            </View>
+
+            {/* Menu Items */}
+            <View style={styles.menuList}>
+              {menuItems.map((item, idx) => (
+                <Animated.View
+                  key={idx}
+                  style={{
+                    opacity: itemAnimations[idx],
+                    transform: [
+                      {
+                        translateY: itemAnimations[idx].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [18, 0],
+                        }),
+                      },
+                    ],
+                  }}
+                >
                   <TouchableOpacity
-                    key={idx}
                     style={styles.menuItem}
+                    activeOpacity={0.7}
                     onPress={() => handleMenuItemPress(item)}
                   >
-                    <View style={styles.menuIcon}>
-                      {item.Image}
-                    </View>
+                    <View style={styles.menuIcon}>{item.Image}</View>
                     <Text style={styles.menuLabel}>{item.label}</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-              
-              <View style={styles.socialSection}>
-                <Text style={styles.appVersion}>App version 1.0.1</Text>
-                <View style={styles.separator} />
-                
-                {!loading && footerData?.socialLinks && footerData.socialLinks.length > 0 && (
-                  <View style={styles.socialIconsRow}>
-                    {footerData.socialLinks.map((socialLink: any, index: number) => {
-                      const icon = getSocialIcon(socialLink.platform);
-                      if (!icon) return null;
-                      
-                      return (
-                        <TouchableOpacity 
-                          key={socialLink._id || index}
+                </Animated.View>
+              ))}
+            </View>
+
+            {/* Social Section */}
+            <View style={styles.socialSection}>
+              <Text style={styles.appVersion}>App version 1.0.1</Text>
+              <View style={styles.separator} />
+
+              {!loading && footerData?.socialLinks && footerData.socialLinks.length > 0 && (
+                <View style={styles.socialIconsRow}>
+                  {footerData.socialLinks.map((socialLink: any, index: number) => {
+                    const icon = getSocialIcon(socialLink.platform);
+                    if (!icon) return null;
+                    return (
+                      <Animated.View
+                        key={socialLink._id || index}
+                        style={{ transform: [{ scale: socialScaleAnim }] }}
+                      >
+                        <TouchableOpacity
                           style={styles.socialIconCircle}
-                          onPress={() => handleSocialLinkPress(socialLink.platform, socialLink.url)}
+                          onPress={() => Linking.openURL(socialLink.url)}
                         >
                           {icon}
                         </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                )}
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+                      </Animated.View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          </LinearGradient>
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -407,19 +269,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.3)",
     flexDirection: "row",
   },
-  overlayTouchable: {
-    flex: 1,
-  },
+  overlayTouchable: { flex: 1 },
   sidebarContainer: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
     width: 335,
     backgroundColor: "white",
-  },
-  sidebarTouchable: {
-    flex: 1,
   },
   sidebar: {
     width: 335,
@@ -428,76 +285,42 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 8,
     justifyContent: "flex-start",
   },
-  logoContainer: {
-    alignItems: "flex-start",
-    marginBottom: 10,
-    marginTop: 50,
-    marginHorizontal: 20,
-  },
-  logo: {
-    // Add specific dimensions if needed
-    resizeMode: 'contain',
-  },
-  menuList: {
-    flex: 1,
-    paddingHorizontal: 18,
-  },
+  logoContainer: { marginTop: 50, marginHorizontal: 20, marginBottom: 10 },
+  logo: { resizeMode: "contain" },
+  menuList: { flex: 1, paddingHorizontal: 18 },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
     paddingVertical: 14,
     borderRadius: 8,
-    marginBottom: 2,
   },
-  menuIcon: {
-    // Container for menu icons to ensure consistent sizing
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  menuIcon: { width: 24, height: 24, justifyContent: "center", alignItems: "center" },
   menuLabel: {
-    color: "rgba(0, 0, 0, 1)",
+    color: "rgba(0,0,0,1)",
     fontSize: 18,
     fontWeight: "500",
     fontFamily: "DMSans-medium",
   },
-  socialSection: {
-    marginBottom: 18,
-    paddingHorizontal: 18,
-  },
+  socialSection: { marginBottom: 18, paddingHorizontal: 18 },
   appVersion: {
-    color: "rgba(0, 0, 0, 1)",
     fontSize: 12,
-    marginBottom: 10,
+    color: "rgba(0,0,0,1)",
     fontWeight: "500",
+    marginBottom: 10,
     fontFamily: "DMSans-medium",
   },
-  separator: {
-    height: 1,
-    width: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-    marginBottom: 20,
-  },
-  socialIconsRow: {
-    flexDirection: "row",
-    gap: 16,
-    flexWrap: 'wrap',
-  },
+  separator: { height: 1, backgroundColor: "rgba(0,0,0,0.1)", marginBottom: 20 },
+  socialIconsRow: { flexDirection: "row", gap: 16, flexWrap: "wrap" },
   socialIconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.3)",
-    justifyContent: "center", 
+    justifyContent: "center",
     alignItems: "center",
   },
-  socialIcon: {
-    width: 20,
-    height: 20,
-    resizeMode: 'contain',
-  },
+  socialIcon: { width: 20, height: 20, resizeMode: "contain" },
 });
 
 export default SidebarModal;

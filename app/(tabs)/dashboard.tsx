@@ -156,7 +156,7 @@ export default function Dashboard() {
                   }}
                 >
                   <TouchableOpacity
-                    onPress={() => router.push(card.path)}
+                    onPress={() => router.push(card.path as any)}
                     activeOpacity={0.8}
                   >
                     <Image
