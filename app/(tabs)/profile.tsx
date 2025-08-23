@@ -243,7 +243,7 @@ export default function Profile() {
 
   const handleLogout = () => {
     dispatch(logout());
-    router.push("/login");
+    router.replace("/login");
   };
 
   const showDatePicker = () => {
