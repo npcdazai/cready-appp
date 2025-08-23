@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import SidebarModal from "../components/SidebarModal";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -102,7 +103,7 @@ export default function Notification() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SidebarModal
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
@@ -173,7 +174,7 @@ export default function Notification() {
         }
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

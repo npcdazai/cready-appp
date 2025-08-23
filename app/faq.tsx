@@ -11,6 +11,7 @@ import {
   View
 } from "react-native";
 import apiClient, { FAQ } from "./utils/apiClient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FAQs() {
   const [expandedIndex, setExpandedIndex] = useState(0);
@@ -43,7 +44,7 @@ export default function FAQs() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
@@ -112,14 +113,14 @@ export default function FAQs() {
           })
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+     backgroundColor: "rgba(249, 249, 249, 1)",
   },
   headerContainer: {
     flexDirection: "row",

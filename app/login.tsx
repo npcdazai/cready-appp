@@ -1,7 +1,7 @@
-import messaging from '@react-native-firebase/messaging';
-import * as Device from 'expo-device';
+import messaging from "@react-native-firebase/messaging";
+import * as Device from "expo-device";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Notifications from 'expo-notifications';
+import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,41 +12,42 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useAuth } from "./context/AuthContext";
 import apiClient from "./utils/apiClient";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 async function registerForPushNotificationsAsync() {
   let token;
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
+      lightColor: "#FF231F7C",
     });
   }
 
   if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
+    if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    if (finalStatus !== 'granted') {
-      alert('Failed to get push token for push notification!');
+    if (finalStatus !== "granted") {
+      alert("Failed to get push token for push notification!");
       return;
     }
-    
+
     await messaging().registerDeviceForRemoteMessages();
     token = await messaging().getToken();
     console.log("FCM Token:", token);
-
   } else {
-    alert('Must use physical device for Push Notifications');
+    alert("Must use physical device for Push Notifications");
   }
 
   return token;
@@ -56,10 +57,10 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const { setPhone: setAuthPhone } = useAuth();
-  const [fcmToken, setFcmToken] = useState<string | undefined>('');
+  const [fcmToken, setFcmToken] = useState<string | undefined>("");
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => setFcmToken(token));
+    registerForPushNotificationsAsync().then((token) => setFcmToken(token));
   }, []);
 
   const handleLogin = async () => {
@@ -72,7 +73,6 @@ export default function Login() {
     try {
       const response = await apiClient.sendOTP(phone);
       if (response.success) {
-        // Store phone number in auth context for OTP verification
         setAuthPhone(phone);
         router.push("/verifyotp");
       } else {
@@ -86,20 +86,33 @@ export default function Login() {
   };
 
   return (
-    <LinearGradient
-    colors={["rgba(31, 225, 233, 0.8)", "rgba(239, 252, 255, 0.5)", "rgba(239, 252, 255, 0.5)"]}
-    start={{ x: 0.4, y: 1 }}
-    end={{ x: 0.5, y: 0.3 }}
-      style={styles.container}
-    >
+    <SafeAreaView style={styles.container}>
+      {/* <View style={{ flex: 1 }}> */}
+      {/* Full Screen Gradient Background */}
+      <LinearGradient
+        colors={[
+          "rgba(31, 225, 233, 0.8)",
+          "rgba(239, 252, 255, 0.5)",
+          "rgba(239, 252, 255, 0.5)",
+        ]}
+        start={{ x: 0.4, y: 1 }}
+        end={{ x: 0.5, y: 0.3 }}
+        // style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Foreground Content */}
+      {/* <SafeAreaView style={styles.container}> */}
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar} />
       </View>
+
       {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Welcome to Cready</Text>
         <Text style={styles.subtitle}>Let&apos;s get you Started.</Text>
+
         {/* Phone Input */}
         <Text style={styles.label}>Phone number</Text>
         <View style={styles.phoneRow}>
@@ -120,40 +133,33 @@ export default function Login() {
             maxLength={10}
           />
         </View>
+
         {/* Login Button */}
         <TouchableOpacity
           style={styles.loginBtn}
           onPress={handleLogin}
           disabled={loading}
         >
-          {loading ? (
-            <Text style={styles.loginBtnText}>Sending...</Text>
-          ) : (
-            <Text style={styles.loginBtnText}>Login</Text>
-          )}
+          <Text style={styles.loginBtnText}>
+            {loading ? "Sending..." : "Login"}
+          </Text>
         </TouchableOpacity>
-        {/* <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.orText}>Or</Text>
-          <View style={styles.divider} />
-        </View>
-        <TouchableOpacity style={styles.googleBtn}>
-          <Image
-            source={require("../assets/images/google-logo.png")}
-            style={styles.googleLogo}
-          />
-          <Text style={styles.googleBtnText}>Login with google</Text>
-        </TouchableOpacity> */}
       </View>
-    </LinearGradient>
+      {/* </SafeAreaView> */}
+      {/* </View> */}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    // flex: 1,
+    // justifyContent: "flex-start",
+    // alignItems: "center",
     flex: 1,
-    justifyContent: "flex-start",
+    width: "100%",
     alignItems: "center",
+    position: "relative",
   },
   progressBarContainer: {
     width: "90%",
@@ -252,51 +258,6 @@ const styles = StyleSheet.create({
   },
   loginBtnText: {
     color: "#fff",
-    fontSize: 16,
-    fontFamily: "DMSans-SemiBold",
-    fontWeight: "600",
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 16,
-    alignSelf: "center",
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#bdbdbd",
-    opacity: 0.3,
-  },
-  orText: {
-    color: "#888",
-    marginHorizontal: 10,
-    fontSize: 14,
-    fontFamily: "DMSans-Regular",
-    fontWeight: "600",
-  },
-  googleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 5,
-    paddingVertical: 16,
-    justifyContent: "center",
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  googleLogo: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-    resizeMode: "contain",
-  },
-  googleBtnText: {
-    color: "#222",
     fontSize: 16,
     fontFamily: "DMSans-SemiBold",
     fontWeight: "600",

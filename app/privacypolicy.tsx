@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PrivacyPolicy() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
@@ -117,14 +118,14 @@ export default function PrivacyPolicy() {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+     backgroundColor: "rgba(249, 249, 249, 1)",
   },
   headerContainer: {
     flexDirection: "row",

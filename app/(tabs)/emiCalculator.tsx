@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import SidebarModal from "../components/SidebarModal";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EmiCalculator() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -34,7 +35,7 @@ export default function EmiCalculator() {
   const disableScroll = () => setScrollEnabled(false);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SidebarModal
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
@@ -229,7 +230,7 @@ export default function EmiCalculator() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

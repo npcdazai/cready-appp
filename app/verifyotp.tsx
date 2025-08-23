@@ -1,19 +1,14 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import OTPTextInput from "react-native-otp-textinput";
 import Svg, { Circle } from "react-native-svg";
 import { useDispatch } from "react-redux";
 import { useAuth } from "./context/AuthContext";
 import { setCredentials } from "./store/slices/authSlice";
 import apiClient from "./utils/apiClient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
@@ -42,7 +37,7 @@ export default function VerifyOtp() {
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   const handleVerifyOTP = async () => {
-    const otpString = otp.replace(/\s/g, ''); // Remove any spaces
+    const otpString = otp.replace(/\s/g, ""); // Remove any spaces
     if (otpString.length !== 4) {
       Alert.alert("Error", "Please enter a valid 4-digit OTP");
       return;
@@ -66,7 +61,7 @@ export default function VerifyOtp() {
             user: response.data.user,
           })
         );
-          router.dismissAll();
+        router.dismissAll();
 
         if (!response?.data?.user?.loanAmount) {
           router.dismissTo("/loanSeeking");
@@ -108,84 +103,85 @@ export default function VerifyOtp() {
   };
 
   return (
-    <LinearGradient
-      colors={[
-        "rgba(31, 225, 233, 0.8)",
-        "rgba(239, 252, 255, 0.5)",
-        "rgba(239, 252, 255, 0.5)",
-      ]}
-      start={{ x: 0.4, y: 1 }}
-      end={{ x: 0.5, y: 0.3 }}
-      style={styles.container}
-    >
-      {/* Progress Bar */}
-      <View style={styles.progressBarContainer}>
-        <View style={styles.progressBar} />
-      </View>
-      {/* Main Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>Please verify your number</Text>
-        <Text style={styles.subtitle}>Enter OTP</Text>
-        {/* OTP Input */}
-        <View style={styles.otpContainer}>
-          <OTPTextInput
-            defaultValue={otp}
-            inputCount={4}
-            tintColor="white"
-            offTintColor="white"
-            containerStyle={styles.otpInputsContainer}
-            textInputStyle={styles.otpInput}
-            handleTextChange={(text) => {
-              setOtp(text);
-            }}
-          />
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={[
+          "rgba(31, 225, 233, 0.8)",
+          "rgba(239, 252, 255, 0.5)",
+          "rgba(239, 252, 255, 0.5)",
+        ]}
+        start={{ x: 0.4, y: 1 }}
+        end={{ x: 0.5, y: 0.3 }}
+         style={StyleSheet.absoluteFill}
+      />
+        {/* Progress Bar */}
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBar} />
         </View>
-        {/* Verify Button */}
-        <TouchableOpacity
-          style={styles.verifyBtn}
-          onPress={handleVerifyOTP}
-          disabled={loading}
-        >
-          {loading ? (
-            <Text style={styles.verifyBtnText}>Verifying...</Text>
-          ) : (
-            <Text style={styles.verifyBtnText}>Verify OTP</Text>
-          )}
-        </TouchableOpacity>
-        {/* Resend OTP */}
-        <TouchableOpacity onPress={handleResendOTP} disabled={loading}>
-          <Text style={styles.resendText}>Resend OTP</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Timer Circle */}
-      <View style={styles.timerCircle}>
-        <Svg width={60} height={60}>
-          {/* Background Circle */}
-          <Circle
-            cx={30}
-            cy={30}
-            r={radius}
-            stroke="rgba(207, 248, 252, 1)"
-            strokeWidth={3}
-            fill="transparent"
-          />
-          {/* Progress Circle */}
-          <Circle
-            cx={30}
-            cy={30}
-            r={radius}
-            stroke="rgba(34, 225, 233, 1)"
-            strokeWidth={3}
-            fill="transparent"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            transform={`rotate(-90, 30, 30)`}
-          />
-        </Svg>
-        <Text style={styles.timerText}>{formatTime(timer)}</Text>
-      </View>
-    </LinearGradient>
+        {/* Main Content */}
+        <View style={styles.content}>
+          <Text style={styles.title}>Please verify your number</Text>
+          <Text style={styles.subtitle}>Enter OTP</Text>
+          {/* OTP Input */}
+          <View style={styles.otpContainer}>
+            <OTPTextInput
+              defaultValue={otp}
+              inputCount={4}
+              tintColor="white"
+              offTintColor="white"
+              containerStyle={styles.otpInputsContainer}
+              textInputStyle={styles.otpInput}
+              handleTextChange={(text) => {
+                setOtp(text);
+              }}
+            />
+          </View>
+          {/* Verify Button */}
+          <TouchableOpacity
+            style={styles.verifyBtn}
+            onPress={handleVerifyOTP}
+            disabled={loading}
+          >
+            {loading ? (
+              <Text style={styles.verifyBtnText}>Verifying...</Text>
+            ) : (
+              <Text style={styles.verifyBtnText}>Verify OTP</Text>
+            )}
+          </TouchableOpacity>
+          {/* Resend OTP */}
+          <TouchableOpacity onPress={handleResendOTP} disabled={loading}>
+            <Text style={styles.resendText}>Resend OTP</Text>
+          </TouchableOpacity>
+        </View>
+        {/* Timer Circle */}
+        <View style={styles.timerCircle}>
+          <Svg width={60} height={60}>
+            {/* Background Circle */}
+            <Circle
+              cx={30}
+              cy={30}
+              r={radius}
+              stroke="rgba(207, 248, 252, 1)"
+              strokeWidth={3}
+              fill="transparent"
+            />
+            {/* Progress Circle */}
+            <Circle
+              cx={30}
+              cy={30}
+              r={radius}
+              stroke="rgba(34, 225, 233, 1)"
+              strokeWidth={3}
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              transform={`rotate(-90, 30, 30)`}
+            />
+          </Svg>
+          <Text style={styles.timerText}>{formatTime(timer)}</Text>
+        </View>
+    </SafeAreaView>
   );
 }
 

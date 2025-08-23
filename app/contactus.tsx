@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ContactUs() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => router.back()} style={styles.menuIcon}>
@@ -39,14 +40,14 @@ export default function ContactUs() {
           </Text>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(249, 249, 249, 1)",
   },
   headerContainer: {
     flexDirection: "row",
@@ -57,7 +58,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(249, 249, 249, 1)",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(234, 236, 240, 1)",
-    zIndex:9999
+    zIndex: 9999,
   },
   menuIcon: {
     justifyContent: "center",

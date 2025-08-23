@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { API_CONFIG } from "./config/api";
 import apiClient, { Partner } from "./utils/apiClient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LendingPartners() {
   const [search, setSearch] = useState("");
@@ -88,7 +89,7 @@ export default function LendingPartners() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
@@ -126,14 +127,14 @@ export default function LendingPartners() {
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+     backgroundColor: "rgba(249, 249, 249, 1)",
   },
   headerContainer: {
     flexDirection: "row",

@@ -14,6 +14,7 @@ import PullToRefreshWrapper from "../components/PullToRefreshWrapper";
 import SidebarModal from "../components/SidebarModal";
 import { API_CONFIG } from "../config/api";
 import { useLoanList } from "../context/LoanListContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Offers() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -32,7 +33,7 @@ export default function Offers() {
   });
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SidebarModal
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
@@ -138,7 +139,7 @@ export default function Offers() {
           </View>
         </View>
       </PullToRefreshWrapper>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -23,6 +23,7 @@ import SidebarModal from "../components/SidebarModal";
 import { API_CONFIG } from "../config/api";
 import { logout, updateUser } from "../store/slices/authSlice";
 import apiClient from "../utils/apiClient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function formatINR(num: number) {
   return num.toLocaleString("en-IN");
@@ -374,7 +375,7 @@ export default function Profile() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SidebarModal
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
@@ -750,7 +751,7 @@ export default function Profile() {
         onCancel={hideDatePicker}
         maximumDate={new Date(new Date().getFullYear() - 18, new Date().getMonth(), new Date().getDate())}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

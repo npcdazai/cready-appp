@@ -14,6 +14,7 @@ import PullToRefreshWrapper from "../components/PullToRefreshWrapper";
 import SidebarModal from "../components/SidebarModal";
 import { API_CONFIG } from "../config/api";
 import { useLoanList } from "../context/LoanListContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Dashboard() {
   const { user } = useSelector((state: any) => state.auth);
@@ -23,7 +24,7 @@ export default function Dashboard() {
   const [imageDimensions, setImageDimensions] = useState<{[key: string]: {width: number, height: number}}>({});
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SidebarModal
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
@@ -181,7 +182,7 @@ export default function Dashboard() {
           </View>
         </View>
       </PullToRefreshWrapper>
-    </View>
+    </SafeAreaView>
   );
 }
 

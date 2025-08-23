@@ -31,7 +31,7 @@ export default function RootLayout() {
     try {
       CrashlyticsService.initialize();
     } catch (error) {
-      console.error('Failed to initialize Crashlytics:', error);
+      console.error("Failed to initialize Crashlytics:", error);
     }
   }, []);
 
@@ -53,7 +53,11 @@ export default function RootLayout() {
             <LoanListProvider>
               <FooterProvider>
                 <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-                  <StatusBar backgroundColor="rgba(255, 255, 255, 1)" barStyle="dark-content" />
+                  <StatusBar
+                    translucent
+                    backgroundColor="transparent"
+                    barStyle="dark-content"
+                  />
                   <NetworkStatusIndicator />
                   <Stack screenOptions={{ headerShown: false }} />
                 </View>
