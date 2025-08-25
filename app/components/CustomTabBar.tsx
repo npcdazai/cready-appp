@@ -1,13 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { router } from "expo-router";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
+  Animated,
   Image,
   ImageBackground,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
@@ -38,6 +39,28 @@ const CustomTabBar: React.FC<CustomTabProps> = ({ state, navigation }) => {
           <View style={styles.tabContainer}>
             {state.routes.map((route, index) => {
               const isFocused = state.index === index;
+              const scaleAnim = useRef(
+                new Animated.Value(isFocused ? 1.1 : 1)
+              ).current;
+              const opacityAnim = useRef(
+                new Animated.Value(isFocused ? 1 : 0.5)
+              ).current;
+
+              useEffect(() => {
+                Animated.parallel([
+                  Animated.spring(scaleAnim, {
+                    toValue: isFocused ? 1.15 : 1,
+                    friction: 5,
+                    useNativeDriver: true,
+                  }),
+                  Animated.timing(opacityAnim, {
+                    toValue: isFocused ? 1 : 0.5,
+                    duration: 250,
+                    useNativeDriver: true,
+                  }),
+                ]).start();
+              }, [isFocused]);
+
               const icon = (() => {
                 switch (route.name) {
                   case "dashboard":
@@ -68,16 +91,16 @@ const CustomTabBar: React.FC<CustomTabProps> = ({ state, navigation }) => {
               };
 
               return (
-                <TouchableOpacity
-                  onPress={onPress}
-                  activeOpacity={1}
-                  key={route.name}
-                  style={{
-                    opacity:
-                      isFocused || route.name === "emiCalculator" ? 1 : 0.5,
-                  }}
-                >
-                  <View style={styles.iconContainer}>
+                <TouchableWithoutFeedback key={route.name} onPress={onPress}>
+                  <Animated.View
+                    style={[
+                      styles.iconContainer,
+                      {
+                        transform: [{ scale: scaleAnim }],
+                        opacity: opacityAnim,
+                      },
+                    ]}
+                  >
                     {route.name === "emiCalculator" ? (
                       <Image source={icon} style={{ bottom: 20, left: 20 }} />
                     ) : route.name === "profile" ? (
@@ -85,7 +108,7 @@ const CustomTabBar: React.FC<CustomTabProps> = ({ state, navigation }) => {
                         {!user?.profileImage ? (
                           <Ionicons
                             name="person-circle"
-                            size={24}
+                            size={26}
                             color={
                               isFocused ? "rgba(98, 50, 255, 1)" : "#AEA8B3"
                             }
@@ -108,9 +131,6 @@ const CustomTabBar: React.FC<CustomTabProps> = ({ state, navigation }) => {
                         source={icon}
                         style={[
                           styles.icon,
-                          isFocused || route.name === "emiCalculator"
-                            ? null
-                            : styles.inactiveIcon,
                           route.name === "emiCalculator"
                             ? { bottom: 30 }
                             : null,
@@ -143,8 +163,8 @@ const CustomTabBar: React.FC<CustomTabProps> = ({ state, navigation }) => {
                         ? "Notifications"
                         : "Profile"}
                     </Text>
-                  </View>
-                </TouchableOpacity>
+                  </Animated.View>
+                </TouchableWithoutFeedback>
               );
             })}
           </View>

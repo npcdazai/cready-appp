@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 8,
     justifyContent: "flex-start",
   },
-  logoContainer: { marginTop: 50, marginHorizontal: 20, marginBottom: 10 },
+  logoContainer: { marginTop: 20, marginHorizontal: 20, marginBottom: 10 },
   logo: { resizeMode: "contain" },
   menuList: { flex: 1, paddingHorizontal: 18 },
   menuItem: {

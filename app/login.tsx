@@ -16,7 +16,16 @@ import {
 } from "react-native";
 import { useAuth } from "./context/AuthContext";
 import apiClient from "./utils/apiClient";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  FadeIn,
+  withTiming,
+  useSharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 
 async function registerForPushNotificationsAsync() {
   let token;
@@ -59,9 +68,25 @@ export default function Login() {
   const { setPhone: setAuthPhone } = useAuth();
   const [fcmToken, setFcmToken] = useState<string | undefined>("");
 
+  // Progress animation
+  const progress = useSharedValue(0.15);
+
   useEffect(() => {
     registerForPushNotificationsAsync().then((token) => setFcmToken(token));
+
+    // Animate progress bar (demo effect)
+    progress.value = withTiming(0.6, { duration: 1500 });
   }, []);
+
+  const animatedProgress = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
+
+  // Button scale animation
+  const scale = useSharedValue(1);
+  const animatedButton = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const handleLogin = async () => {
     if (!phone || phone.length !== 10) {
@@ -87,8 +112,7 @@ export default function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* <View style={{ flex: 1 }}> */}
-      {/* Full Screen Gradient Background */}
+      {/* Background Gradient */}
       <LinearGradient
         colors={[
           "rgba(31, 225, 233, 0.8)",
@@ -97,65 +121,77 @@ export default function Login() {
         ]}
         start={{ x: 0.4, y: 1 }}
         end={{ x: 0.5, y: 0.3 }}
-        // style={StyleSheet.absoluteFillObject}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Foreground Content */}
-      {/* <SafeAreaView style={styles.container}> */}
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
-        <View style={styles.progressBar} />
+        <Animated.View style={[styles.progressBar, animatedProgress]} />
       </View>
 
       {/* Main Content */}
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Cready</Text>
-        <Text style={styles.subtitle}>Let&apos;s get you Started.</Text>
+        <Animated.Text
+          entering={FadeInDown.delay(200).duration(600)}
+          style={styles.title}
+        >
+          Welcome to Cready
+        </Animated.Text>
+
+        <Animated.Text
+          entering={FadeInDown.delay(400).duration(600)}
+          style={styles.subtitle}
+        >
+          Let&apos;s get you Started.
+        </Animated.Text>
 
         {/* Phone Input */}
-        <Text style={styles.label}>Phone number</Text>
-        <View style={styles.phoneRow}>
-          <View style={styles.countryBox}>
-            <Image
-              source={require("../assets/images/india-flag.png")}
-              style={styles.flag}
+        <Animated.View entering={FadeInUp.delay(600).duration(600)}>
+          <Text style={styles.label}>Phone number</Text>
+          <View style={styles.phoneRow}>
+            <View style={styles.countryBox}>
+              <Image
+                source={require("../assets/images/india-flag.png")}
+                style={styles.flag}
+              />
+              <Text style={styles.countryCode}>+91</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="1234567890"
+              placeholderTextColor="#bdbdbd"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+              maxLength={10}
             />
-            <Text style={styles.countryCode}>+ 91</Text>
           </View>
-          <TextInput
-            style={styles.input}
-            placeholder="1234567890"
-            placeholderTextColor="#bdbdbd"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-            maxLength={10}
-          />
-        </View>
+        </Animated.View>
 
         {/* Login Button */}
-        <TouchableOpacity
-          style={styles.loginBtn}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.loginBtnText}>
-            {loading ? "Sending..." : "Login"}
-          </Text>
-        </TouchableOpacity>
+        <Animated.View entering={FadeIn.delay(800)} style={{ marginTop: 10 }}>
+          <Animated.View style={animatedButton}>
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPressIn={() => (scale.value = withTiming(0.95))}
+              onPressOut={() => (scale.value = withTiming(1))}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.loginBtnText}>
+                {loading ? "Sending..." : "Login"}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
       </View>
-      {/* </SafeAreaView> */}
-      {/* </View> */}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // justifyContent: "flex-start",
-    // alignItems: "center",
     flex: 1,
     width: "100%",
     alignItems: "center",
@@ -171,7 +207,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   progressBar: {
-    width: "15%",
     height: "100%",
     backgroundColor: "rgba(98, 50, 255, 1)",
     borderRadius: 4,
@@ -249,7 +284,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingVertical: 16,
     alignItems: "center",
-    marginTop: 10,
     shadowColor: "#7c4dff",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

@@ -1,6 +1,8 @@
 import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Image,
   Linking,
   Platform,
@@ -18,18 +20,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Offers() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState<{[key: string]: {width: number, height: number}}>({});
+  const [imageDimensions, setImageDimensions] = useState<{
+    [key: string]: { width: number; height: number };
+  }>({});
   const { type } = useLocalSearchParams();
   const { loanList, refreshLoanList } = useLoanList();
   const { user } = useSelector((state: any) => state.auth);
 
   const sortedLoanList = [...loanList].sort((a: any, b: any) => {
-    const aIsAvailable = user?.availablePartner?.includes(a?.partner?.name) || false;
-    const bIsAvailable = user?.availablePartner?.includes(b?.partner?.name) || false;
-    
-    if (aIsAvailable && !bIsAvailable) return -1; 
-    if (!aIsAvailable && bIsAvailable) return 1; 
-    return 0; 
+    const aIsAvailable =
+      user?.availablePartner?.includes(a?.partner?.name) || false;
+    const bIsAvailable =
+      user?.availablePartner?.includes(b?.partner?.name) || false;
+
+    if (aIsAvailable && !bIsAvailable) return -1;
+    if (!aIsAvailable && bIsAvailable) return 1;
+    return 0;
   });
 
   return (
@@ -62,8 +68,6 @@ export default function Offers() {
         onRefresh={refreshLoanList}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-
         <View
           style={{
             backgroundColor: "rgba(234, 236, 240, 1)",
@@ -73,7 +77,7 @@ export default function Offers() {
         />
         <View style={{ backgroundColor: "white" }}>
           <View style={{ paddingBottom: 90, marginTop: 20 }}>
-            {sortedLoanList.map((item: any, index: any) => {
+            {sortedLoanList.map((item: any, index: number) => {
               let url =
                 API_CONFIG.BASE_URL + item?.image ||
                 API_CONFIG.BASE_URL + item?.partner?.logoUrl;
@@ -82,58 +86,113 @@ export default function Offers() {
                 Image.getSize(
                   url,
                   (width, height) => {
-                    setImageDimensions(prev => ({
+                    setImageDimensions((prev) => ({
                       ...prev,
-                      [url]: { width, height }
+                      [url]: { width, height },
                     }));
                   },
                   (error) => {
                     console.error("Failed to get image size:", error);
-                    setImageDimensions(prev => ({
+                    setImageDimensions((prev) => ({
                       ...prev,
-                      [url]: { width: 100, height: 100 }
+                      [url]: { width: 100, height: 100 },
                     }));
                   }
                 );
               }
 
-              const dimensions = imageDimensions[url] || { width: 100, height: 100 };
-              
+              const dimensions =
+                imageDimensions[url] || { width: 100, height: 100 };
+
+              // Animations
+              const fadeAnim = useRef(new Animated.Value(0)).current;
+              const translateY = useRef(new Animated.Value(20)).current;
+              const scaleAnim = useRef(new Animated.Value(1)).current;
+
+              useEffect(() => {
+                Animated.parallel([
+                  Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 400,
+                    delay: index * 150, // stagger
+                    useNativeDriver: true,
+                  }),
+                  Animated.timing(translateY, {
+                    toValue: 0,
+                    duration: 400,
+                    delay: index * 150,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                  }),
+                ]).start();
+              }, []);
+
+              const handlePressIn = () => {
+                Animated.spring(scaleAnim, {
+                  toValue: 0.95,
+                  useNativeDriver: true,
+                }).start();
+              };
+
+              const handlePressOut = () => {
+                Animated.spring(scaleAnim, {
+                  toValue: 1,
+                  friction: 3,
+                  tension: 40,
+                  useNativeDriver: true,
+                }).start();
+              };
+
               return (
-                <View key={item.id || index} style={styles.offerCard}>
-                  <View style={styles.offerHeader}>
-                    <Image
-                      source={{ uri: url }}
-                      style={{ width: dimensions.width, height: dimensions.height, borderRadius: 5 }}
-                      resizeMode="contain"
-                    />
-                  </View>
-                  <Text style={styles.offerAmount}>
-                    {item.price}
-                  </Text>
-                  <Text style={styles.offerDetails}>{item?.description}</Text>
-                  <View style={styles.offerActions}>
-                    {JSON.parse(item.tags).map((tag: any, tagIndex: any) => (
-                      <View
-                        key={tagIndex}
-                        style={styles.quickApprovalBtn}
+                <Animated.View
+                  key={item.id || index}
+                  style={{
+                    opacity: fadeAnim,
+                    transform: [{ translateY }],
+                  }}
+                >
+                  <View style={styles.offerCard}>
+                    <View style={styles.offerHeader}>
+                      <Image
+                        source={{ uri: url }}
+                        style={{
+                          width: dimensions.width,
+                          height: dimensions.height,
+                          borderRadius: 5,
+                        }}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Text style={styles.offerAmount}>{item.price}</Text>
+                    <Text style={styles.offerDetails}>{item?.description}</Text>
+                    <View style={styles.offerActions}>
+                      {JSON.parse(item.tags).map(
+                        (tag: any, tagIndex: any) => (
+                          <View key={tagIndex} style={styles.quickApprovalBtn}>
+                            <Text style={styles.quickApprovalText}>{tag}</Text>
+                          </View>
+                        )
+                      )}
+                    </View>
+
+                    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                      <TouchableOpacity
+                        onPressIn={handlePressIn}
+                        onPressOut={handlePressOut}
+                        onPress={() => {
+                          const url =
+                            Platform.OS === "ios"
+                              ? item?.appstore || item?.utm
+                              : item?.playstore || item?.utm;
+                          Linking.openURL(url);
+                        }}
+                        style={styles.applyNowBtn}
                       >
-                        <Text style={styles.quickApprovalText}>{tag}</Text>
-                      </View>
-                    ))}
+                        <Text style={styles.applyNowText}>Apply Now</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => {
-                      const url = Platform.OS === "ios" 
-                        ? item?.appstore || item?.utm
-                        : item?.playstore || item?.utm;
-                      Linking.openURL(url);
-                    }}
-                    style={styles.applyNowBtn}
-                  >
-                    <Text style={styles.applyNowText}>Apply Now</Text>
-                  </TouchableOpacity>
-                </View>
+                </Animated.View>
               );
             })}
           </View>
@@ -155,7 +214,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal:4
+    paddingHorizontal: 4,
   },
   menuIcon: {
     justifyContent: "center",

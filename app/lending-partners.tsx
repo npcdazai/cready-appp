@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Alert,
   FlatList,
@@ -8,7 +8,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Animated,
+  Easing,
 } from "react-native";
 import { API_CONFIG } from "./config/api";
 import apiClient, { Partner } from "./utils/apiClient";
@@ -18,7 +20,9 @@ export default function LendingPartners() {
   const [search, setSearch] = useState("");
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [imageDimensions, setImageDimensions] = useState<{[key: string]: {width: number, height: number}}>({});
+  const [imageDimensions, setImageDimensions] = useState<{
+    [key: string]: { width: number; height: number };
+  }>({});
 
   useEffect(() => {
     fetchPartners();
@@ -43,63 +47,16 @@ export default function LendingPartners() {
     partner.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const renderPartner = ({ item }: { item: any }) => {
-    const imageUrl = API_CONFIG.BASE_URL + item.logoUrl;
-    
-    // Get image dimensions if not already cached
-    if (!imageDimensions[imageUrl]) {
-      Image.getSize(
-        imageUrl,
-        (width, height) => {
-          setImageDimensions(prev => ({
-            ...prev,
-            [imageUrl]: { width, height }
-          }));
-        },
-        (error) => {
-          console.error("Failed to get image size:", error);
-          // Set default dimensions on error
-          setImageDimensions(prev => ({
-            ...prev,
-            [imageUrl]: { width: 110, height: 50 }
-          }));
-        }
-      );
-    }
-
-    const dimensions = imageDimensions[imageUrl] || { width: 110, height: 50 };
-    
-    return (
-      <View style={styles.card}>
-        <View style={styles.logoContainer}>
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={[styles.logo, { width: dimensions.width, height: dimensions.height }]} 
-            resizeMode="contain"
-          />
-        </View>
-        {/* <TouchableOpacity
-          style={styles.button}
-          onPress={() => Linking.openURL(item.websiteUrl)}
-        >
-          <Text style={styles.buttonText}>View site</Text>
-        </TouchableOpacity> */}
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.menuIcon}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.menuIcon}>
           <Image source={require("../assets/images/backIocn.png")} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lending Partners</Text>
       </View>
+
       {/* Search Bar */}
       <View style={styles.searchBarWrapper}>
         <View style={styles.searchBar}>
@@ -117,11 +74,19 @@ export default function LendingPartners() {
           />
         </View>
       </View>
+
       {/* Partners Grid */}
       <FlatList
         data={filteredPartners}
         keyExtractor={(item) => item.name}
-        renderItem={renderPartner}
+        renderItem={({ item, index }) => (
+          <PartnerCard
+            item={item}
+            index={index}
+            imageDimensions={imageDimensions}
+            setImageDimensions={setImageDimensions}
+          />
+        )}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.row}
@@ -131,10 +96,87 @@ export default function LendingPartners() {
   );
 }
 
+/** ✅ PartnerCard with clean light fade-in */
+function PartnerCard({
+  item,
+  index,
+  imageDimensions,
+  setImageDimensions,
+}: {
+  item: Partner;
+  index: number;
+  imageDimensions: { [key: string]: { width: number; height: number } };
+  setImageDimensions: React.Dispatch<
+    React.SetStateAction<{ [key: string]: { width: number; height: number } }>
+  >;
+}) {
+  const imageUrl = API_CONFIG.BASE_URL + item.logoUrl;
+
+  // Get image dimensions if not cached
+  useEffect(() => {
+    if (!imageDimensions[imageUrl]) {
+      Image.getSize(
+        imageUrl,
+        (width, height) => {
+          setImageDimensions((prev) => ({
+            ...prev,
+            [imageUrl]: { width, height },
+          }));
+        },
+        () => {
+          setImageDimensions((prev) => ({
+            ...prev,
+            [imageUrl]: { width: 110, height: 50 },
+          }));
+        }
+      );
+    }
+  }, [imageUrl]);
+
+  const dimensions = imageDimensions[imageUrl] || { width: 110, height: 50 };
+
+  // Fade-in animation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      delay: index * 120, // staggered delay
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        flex: 1,
+      }}
+    >
+      <TouchableOpacity activeOpacity={0.9} style={{ flex: 1 }}>
+        <View style={styles.card}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={{ uri: imageUrl }}
+              style={[
+                styles.logo,
+                { width: dimensions.width, height: dimensions.height },
+              ]}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-     backgroundColor: "rgba(249, 249, 249, 1)",
+    backgroundColor: "rgba(249, 249, 249, 1)",
   },
   headerContainer: {
     flexDirection: "row",
@@ -145,7 +187,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(249, 249, 249, 1)",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(234, 236, 240, 1)",
-
   },
   menuIcon: {
     justifyContent: "center",
@@ -226,27 +267,10 @@ const styles = StyleSheet.create({
     height: 90,
     justifyContent: "center",
     alignItems: "center",
-    // marginBottom: 16,
     backgroundColor: "white",
-    borderWidth:1,
-    borderColor:"rgba(98, 50, 255, 0.1)",
-    borderRadius:10
+    borderWidth: 1,
+    borderColor: "rgba(98, 50, 255, 0.1)",
+    borderRadius: 10,
   },
-  logo: {
-    // Dimensions are now handled dynamically in the component
-  },
-  button: {
-    backgroundColor: "rgba(98, 50, 255, 1)",
-    borderRadius: 8,
-    paddingVertical: 10,
-    width: "100%",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  buttonText: {
-    color: "rgba(255, 255, 255, 1)",
-    fontSize: 12,
-    fontWeight: "600",
-    fontFamily: "DMSans-Bold",
-  },
+  logo: {},
 });
